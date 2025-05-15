@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSH Tunnel Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div id="app" class="p-4">
+    <h1 class="text-2xl font-bold mb-4">SSH Tunnel Manager</h1>
+
+    <form @submit.prevent="addProfile" class="space-y-2">
+      <input v-model="newProfile.name" placeholder="Name" class="input">
+      <input v-model="newProfile.user" placeholder="User" class="input">
+      <input v-model="newProfile.host" placeholder="Host" class="input">
+      <input v-model="newProfile.key_path" placeholder="Key Path" class="input">
+      <input v-model.number="newProfile.local_port" placeholder="Local Port" class="input">
+      <input v-model="newProfile.remote_host" placeholder="Remote Host" class="input">
+      <input v-model.number="newProfile.remote_port" placeholder="Remote Port" class="input">
+      <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Profile</button>
+    </form>
+
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold mb-2">Saved Profiles</h2>
+      <ul>
+        <li v-for="p in profiles" :key="p.id" class="flex justify-between items-center border p-2 mb-2 rounded">
+          <span>{{ p.name }} ({{ p.user }}@{{ p.host }})</span>
+          <div class="space-x-2">
+            <button @click="startTunnel(p)" class="bg-green-500 text-white px-2 py-1 rounded">Start</button>
+            <button @click="stopTunnel(p.id)" class="bg-red-500 text-white px-2 py-1 rounded">Stop</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          newProfile: {
+            name: '', user: '', host: '', key_path: '', local_port: 5432, remote_host: '', remote_port: 5432
+          },
+          profiles: []
+        };
+      },
+      methods: {
+        async fetchProfiles() {
+          this.profiles = await window.api.getProfiles();
+        },
+        async addProfile() {
+          await window.api.addProfile(this.newProfile);
+          this.newProfile = { name: '', user: '', host: '', key_path: '', local_port: 5432, remote_host: '', remote_port: 5432 };
+          this.fetchProfiles();
+        },
+        async startTunnel(profile) {
+          await window.api.startTunnel(profile);
+        },
+        async stopTunnel(id) {
+          await window.api.stopTunnel(id);
+        }
+      },
+      mounted() {
+        this.fetchProfiles();
+      }
+    }).mount('#app');
+  </script>
+
+  <style>
+    .input {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+    }
+  </style>
+</body>
+</html>
